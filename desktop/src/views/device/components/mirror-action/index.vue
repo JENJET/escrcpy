@@ -48,12 +48,18 @@ export default {
       const args = this.preferenceStore.scrcpyParameter(row.id)
 
       try {
+        const mirrorTitle = `${this.deviceStore.getLabel(row, 'mirror')}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+        const mirrorId = `${row.id}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+
         const mirroring = this.$scrcpy.mirror(row.id, {
-          title: this.deviceStore.getLabel(row, 'mirror'),
+          title: mirrorTitle,
           args,
+          mirrorId,
           stdout: this.onStdout,
           stderr: this.onStderr,
         })
+
+        window.$preload.ipcRenderer.send('sidebar-open', { mirrorId, deviceId: row.id, mirrorTitle })
 
         await sleep(500)
 
@@ -62,6 +68,8 @@ export default {
         openFloatControl(toRaw(row))
 
         await mirroring
+
+        window.$preload.ipcRenderer.send('sidebar-close', mirrorId)
       }
       catch (error) {
         console.error('mirror.args', args)

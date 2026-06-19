@@ -20,7 +20,8 @@ const alias = {
   $electron: resolve('electron'),
   $control: resolve('pages/control'),
   $explorer: resolve('pages/explorer'),
-  $terminal: resolve('pages/terminal')
+  $sidebar: resolve('pages/sidebar'),
+  $terminal: resolve('pages/terminal'),
 }
 
 function mergeCommon(config, { command = '' } = {}) {
@@ -55,6 +56,7 @@ export default function (args) {
             main: resolve('index.html'),
             control: resolve('pages/control/index.html'),
             explorer: resolve('pages/explorer/index.html'),
+            sidebar: resolve('pages/sidebar/index.html'),
             terminal: resolve('pages/terminal/index.html'),
           },
         },

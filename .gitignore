@@ -33,3 +33,8 @@ dist-ssr
 dist-electron
 dist-release
 dist-docs
+
+# Build artifacts
+*.exe
+*.pdb
+desktop/resources/

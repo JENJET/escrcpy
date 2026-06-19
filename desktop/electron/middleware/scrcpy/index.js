@@ -43,12 +43,20 @@ function createScrcpyProcess(command, options = {}) {
 
 function createMirrorProcess(
   serial,
-  { title, args = '', ...options } = {},
+  { title, args = '', mirrorId, ...options } = {},
 ) {
-  return createScrcpyProcess(
+  const proc = createScrcpyProcess(
     `--serial="${serial}" --window-title="${title}" ${args}`,
     options,
   )
+
+  proc.finally(() => {
+    electronAPI.ipcRenderer.send('mirror-process-exit', serial)
+    if (mirrorId)
+      electronAPI.ipcRenderer.send('sidebar-close', mirrorId)
+  }).catch(() => {})
+
+  return proc
 }
 
 async function shell(...args) {

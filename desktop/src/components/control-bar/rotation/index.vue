@@ -1,5 +1,12 @@
 <template>
-  <el-dropdown :disabled="loading || floating || ['unauthorized', 'offline'].includes(device.status)" @command="handleCommand">
+  <div v-if="floating" style="display:contents">
+    <slot :trigger="handleTrigger" />
+  </div>
+  <el-dropdown
+    v-else
+    :disabled="loading || ['unauthorized', 'offline'].includes(device.status)"
+    @command="handleCommand"
+  >
     <slot :loading :trigger="handleTrigger" />
 
     <template #dropdown>
@@ -26,6 +33,10 @@ export default {
       default: () => ({}),
     },
     floating: {
+      type: Boolean,
+      default: false,
+    },
+    vertical: {
       type: Boolean,
       default: false,
     },

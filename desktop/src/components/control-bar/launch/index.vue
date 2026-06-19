@@ -68,6 +68,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  vertical: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const startApp = useStartApp()

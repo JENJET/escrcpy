@@ -42,6 +42,7 @@ import {
   explorerModule,
   mainModule,
   scheduleModule,
+  sidebarModule,
   terminalModule,
 } from './modules/index.js'
 
@@ -78,6 +79,7 @@ mainApp.use(controlModule)
 mainApp.use(explorerModule)
 mainApp.use(terminalModule)
 mainApp.use(scheduleModule)
+mainApp.use(sidebarModule)
 
 app.whenReady().then(() => {
   mainApp.start()

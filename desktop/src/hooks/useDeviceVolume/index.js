@@ -66,7 +66,7 @@ export function useDeviceVolume({ devices, native } = {}) {
     window.$preload.ipcRenderer.invoke('open-system-menu', {
       channel,
       options: toRaw(options.value),
-    })
+    }).catch(() => {})
   }
 
   async function handleCommand(value) {

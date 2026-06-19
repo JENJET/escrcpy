@@ -24,8 +24,14 @@ corepack enable pnpm
 # Install dependencies
 pnpm install
 
+# Build C# tracker (sidebar window positioning helper, Windows only)
+pnpm build:tracker
+
 # Start development server
 pnpm dev
+
+# One-command: build tracker + start dev server
+pnpm dev:full
 
 # Build applications
 pnpm build          # Auto-detect platform

@@ -1,5 +1,9 @@
 <template>
+  <div v-if="floating" style="display:contents">
+    <slot :trigger="handleTrigger" />
+  </div>
   <el-dropdown
+    v-else
     :hide-on-click="false"
     :disabled="disabled"
     @command="handleCommand"
@@ -29,6 +33,10 @@ const props = defineProps({
     default: () => ({}),
   },
   floating: {
+    type: Boolean,
+    default: false,
+  },
+  vertical: {
     type: Boolean,
     default: false,
   },

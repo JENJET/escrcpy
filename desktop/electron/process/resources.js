@@ -1,14 +1,22 @@
 import { resolve } from 'node:path'
+import { existsSync } from 'node:fs'
 import which from 'which'
 
 export function extraResolve(filePath) {
-  const isProduction = import.meta.env.MODE === 'production'
+  const resolvePath = base => resolve(base, 'extra', filePath)
 
-  const basePath = isProduction ? process.resourcesPath : 'electron/resources'
+  if (import.meta.env.MODE !== 'production')
+    return resolvePath('electron/resources')
 
-  const value = resolve(basePath, 'extra', filePath)
+  const prodPath = resolvePath(process.resourcesPath || '')
+  if (prodPath && existsSync(prodPath))
+    return prodPath
 
-  return value
+  const fallback = resolvePath('electron/resources')
+  if (existsSync(fallback))
+    return fallback
+
+  return prodPath
 }
 
 export function buildResolve(value) {

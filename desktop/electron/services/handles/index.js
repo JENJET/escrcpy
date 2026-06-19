@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, screen, shell } from 'electron'
+import { t } from '$electron/helpers/i18n/index.js'
 import fs from 'fs-extra'
 import path from 'node:path'
 import { openLogPath } from '$root/electron/helpers/debugger/index.js'
@@ -178,7 +179,7 @@ export default {
 
       const template = options.map((item) => {
         return {
-          label: item.label,
+          label: t(item.label),
           enabled: item.enabled ?? !item.disabled,
           click() {
             if (isWindowDestroyed(win)) {

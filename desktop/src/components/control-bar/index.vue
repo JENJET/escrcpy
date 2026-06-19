@@ -1,22 +1,20 @@
 <template>
   <div
-    class="bg-primary-100 dark:bg-gray-800 flex group overflow-hidden"
+    class="bg-primary-100 dark:bg-gray-800 group overflow-hidden"
+    :class="vertical ? 'flex-col' : 'flex'"
   >
     <el-button
+      v-if="!vertical"
       type="primary"
       class="el-button-nav"
-      :style="{
-        ...buttonHeightStyle,
-      }"
+      :style="{ ...buttonHeightStyle }"
       title="Prev"
       @click="handlePrev"
     >
-      <el-icon>
-        <CaretLeft />
-      </el-icon>
+      <el-icon><CaretLeft /></el-icon>
     </el-button>
 
-    <Scrollable ref="scrollableRef" class="flex-1 min-w-0" disabled-drag>
+    <Scrollable v-if="!vertical" ref="scrollableRef" class="flex-1 min-w-0" disabled-drag>
       <Swapy
         :key="controlStore.swapyKey"
         :enabled="swapyEnabled"
@@ -25,72 +23,47 @@
         :config="{ animation: 'dynamic', dragAxis: 'x', autoScrollOnDrag: false }"
         @swap-end="onSwapEnd"
       >
-        <SwapyItem
+        <ControlBarButton
           v-for="item of controlModel"
           :key="item.id"
-          class="flex-none"
-          :class="[buttonClass]"
-          v-bind="{
-            slotId: item.id,
-            itemId: item.id,
-          }"
-        >
-          <component
-            :is="item.component || 'div'"
-            v-bind="{
-              device,
-              floating,
-            }"
-          >
-            <template #default="{ loading = false, trigger } = {}">
-              <el-button
-                type="primary"
-                plain
-                class="!border-none !mx-0 !py-0 bg-transparent !rounded-0"
-                :class="[
-                  ['unauthorized', 'offline'].includes(device.status) ? '!bg-transparent' : '',
-                  buttonClass,
-                ]"
-                :style="{
-                  ...buttonHeightStyle,
-                }"
-                :disabled="['unauthorized', 'offline'].includes(device.status)"
-                :title="$t(item.tips || item.label)"
-                :loading="loading"
-                @click="handleClick(item, trigger || item.trigger)"
-              >
-                <template #icon>
-                  <el-icon v-if="item.elIcon" :class="item.iconClass">
-                    <component :is="item.elIcon" />
-                  </el-icon>
-
-                  <i v-else-if="item.fontIcon" :class="item.fontIcon"></i>
-                </template>
-              </el-button>
-            </template>
-          </component>
-        </SwapyItem>
+          :item="item" :device="device" :floating="floating"
+          :button-class="buttonClass" :button-style="buttonStyle"
+        />
       </Swapy>
     </Scrollable>
+    <div v-else class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
+      <Swapy
+        :key="controlStore.swapyKey"
+        :enabled="swapyEnabled"
+        class="flex flex-col items-center"
+        :config="{ animation: 'dynamic', dragAxis: 'y', autoScrollOnDrag: false }"
+        @swap-end="onSwapEnd"
+      >
+        <ControlBarButton
+          v-for="item of controlModel"
+          :key="item.id"
+          :item="item" :device="device" :floating="floating"
+          :button-class="buttonClass" :button-style="buttonStyle" vertical
+        />
+      </Swapy>
+    </div>
 
     <el-button
+      v-if="!vertical"
       type="primary"
       class="el-button-nav"
-      :style="{
-        ...buttonHeightStyle,
-      }"
+      :style="{ ...buttonHeightStyle }"
       title="Next"
       @click="handleNext"
     >
-      <el-icon>
-        <CaretRight />
-      </el-icon>
+      <el-icon><CaretRight /></el-icon>
     </el-button>
   </div>
 </template>
 
 <script>
 import { controlBarHeight } from '$control/configs/index.js'
+import ControlBarButton from './control-bar-button.vue'
 import Install from './install/index.vue'
 import Launch from './launch/index.vue'
 import Explorer from './explorer/index.vue'
@@ -103,6 +76,8 @@ import Volume from './volume/index.vue'
 
 export default {
   components: {
+    ControlBarButton,
+    /* eslint-disable vue/no-unused-components */
     Screenshot,
     Install,
     Launch,
@@ -112,6 +87,7 @@ export default {
     Explorer,
     Terminal,
     Schedule,
+    /* eslint-enable vue/no-unused-components */
   },
   props: {
     device: {
@@ -119,6 +95,10 @@ export default {
       default: () => ({}),
     },
     floating: {
+      type: Boolean,
+      default: false,
+    },
+    vertical: {
       type: Boolean,
       default: false,
     },
@@ -257,6 +237,15 @@ export default {
 
       return value
     },
+    buttonStyle() {
+      if (this.vertical) {
+        return { height: `${this.buttonHeight}px !important`, width: '100%' }
+      }
+      if (!this.buttonHeight) {
+        return {}
+      }
+      return { height: `${this.buttonHeight}px !important` }
+    },
     buttonHeightStyle() {
       if (!this.buttonHeight) {
         return {}
@@ -273,19 +262,6 @@ export default {
     },
     handleNext() {
       this.$refs.scrollableRef.scrollForward()
-    },
-    handleClick(row, trigger) {
-      if (trigger) {
-        trigger(row)
-        return false
-      }
-
-      if (row?.command) {
-        this.$adb.deviceShell(this.device.id, row.command)
-      }
-      else if (row?.scrcpyCommand) {
-        this.$scrcpy.control(this.device.id, { command: row.scrcpyCommand })
-      }
     },
     onSwapEnd(event) {
       const value = event.slotItemMap.asArray.map(obj => obj.item)

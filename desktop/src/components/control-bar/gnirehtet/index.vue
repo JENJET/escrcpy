@@ -1,5 +1,8 @@
 <template>
-  <el-dropdown :disabled="floating" @command="handleCommand">
+  <div v-if="floating" style="display:contents">
+    <slot :loading="device.$gnirehtetLoading" :trigger="onTrigger" />
+  </div>
+  <el-dropdown v-else :disabled="floating" @command="handleCommand">
     <div
       :title="device.$gnirehtetLoadingText"
       @click="onTrigger"
@@ -33,6 +36,10 @@ export default {
       default: () => ({}),
     },
     floating: {
+      type: Boolean,
+      default: false,
+    },
+    vertical: {
       type: Boolean,
       default: false,
     },

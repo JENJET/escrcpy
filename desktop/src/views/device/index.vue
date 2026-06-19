@@ -327,10 +327,6 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   unAdbWatch?.()
 })
-
-onActivated(() => {
-  getDeviceData()
-})
 </script>
 
 <style lang="postcss" scoped>
