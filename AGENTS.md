@@ -24,6 +24,10 @@ Escrcpy is a pnpm + Turborepo monorepo for an Electron GUI around Android mirror
 
 There is no repo-wide test script today. For changes, run the smallest meaningful verification first, then `pnpm lint`; use `pnpm build` for packaging, Electron main-process, Vite config, dependency, or release-sensitive changes.
 
+## Agent Workflow
+
+- After every code change, automatically run `cd desktop && npx vite build` to rebuild the renderer. Do not wait for the user to ask. If `desktop/electron/modules/sidebar/tracker.cs` was modified, also run `pnpm build:tracker` before the renderer build. After the build completes, run `Start-Process powershell -ArgumentList "-NoProfile","-Command","pnpm exec electron ." -WindowStyle Hidden` to start the app non-blocking.
+
 ## Frontend Patterns
 
 - Vue code uses Vue 3 Composition API with `<script setup>` and auto-imported Vue, VueUse, Pinia, router, `definePage`, and `t` globals from [desktop/src/plugins/internal.js](../desktop/src/plugins/internal.js) and [eslint.config.js](../eslint.config.js).
@@ -53,6 +57,7 @@ There is no repo-wide test script today. For changes, run the smallest meaningfu
 - Audio in wscrcpy is intentionally opt-in by default. On Windows, audio plus control should default `clipboardAutosync` to `false` because clipboard device messages can destabilize the controller while streams keep running.
 - The desktop app is mostly JavaScript/JSDoc, while workspace packages may be TypeScript. Do not add broad strict TS assumptions to the desktop renderer/main app.
 - Use kebab-case for new directories and files.
+- In `desktop/src/components/control-bar/control-bar-button.vue`, calling `trigger()` (opens native menu via `Menu.popup()`) while `el-button` is in `:active` state causes the state to get stuck because the native menu steals `mouseup`. Always `blur()` first and delay the call with `setTimeout(50)` to let the browser clear the state before the menu opens.
 
 ## Documentation Links
 

@@ -13,7 +13,7 @@
           :disabled="['unauthorized', 'offline'].includes(device.status)"
           :title="$t(item.tips || item.label)"
           :loading="loading"
-          @click="handleClick(trigger || item.trigger)"
+          @click="handleClick($event, trigger || item.trigger)"
         >
           <template #icon>
             <el-icon v-if="item.elIcon" :class="item.iconClass">
@@ -60,9 +60,13 @@ export default {
     vertical: { type: Boolean, default: false },
   },
   methods: {
-    handleClick(trigger) {
+    handleClick(event, trigger) {
       if (trigger) {
-        trigger(this.item)
+        // Clear hover/active state first, then open native menu after a brief
+        // delay. This prevents Electron from keeping :active stuck when the
+        // native Menu.popup() steals the mouseup event.
+        event?.currentTarget?.blur()
+        setTimeout(() => trigger(this.item), 50)
         return
       }
       if (this.item?.command)
