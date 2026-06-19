@@ -57,7 +57,7 @@ endlocal
 echo OK
 
 REM Copy t.exe to extra resources (for electron-builder to pick up)
-copy t.exe ..\..\..\resources\extra\win\t.exe /Y >nul
+copy t.exe ..\..\resources\extra\win\t.exe /Y >nul
 echo OK
 echo.
 

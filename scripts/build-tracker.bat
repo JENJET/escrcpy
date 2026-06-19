@@ -34,6 +34,9 @@ echo OK
 
 echo [Copy] t.exe ^-^> dist-electron
 copy %SRC%\t.exe %DIST%\t.exe /Y >nul
+
+echo [Copy] t.exe ^-^> electron resources (for electron-builder)
+copy %SRC%\t.exe desktop\electron\resources\extra\win\t.exe /Y >nul
 echo OK
 echo.
 
