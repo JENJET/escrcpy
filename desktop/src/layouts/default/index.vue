@@ -24,7 +24,11 @@
     </AppHeader>
 
     <div class="flex-1 h-0 overflow-auto">
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <keep-alive>
+          <component :is="Component" />
+        </keep-alive>
+      </RouterView>
     </div>
   </div>
 </template>
