@@ -201,12 +201,48 @@ function scrollBackward() {
   }
 }
 
+// Keep the scroll offset within bounds (e.g. after the container/content resizes),
+// otherwise a stale offset leaves a blank gap once content shrinks or fits.
+function clampScroll() {
+  if (!container.value || !content.value) {
+    return
+  }
+
+  if (props.direction === 'horizontal') {
+    const max = Math.max(0, content.value.offsetWidth - container.value.offsetWidth)
+    scrollLeft.value = Math.min(scrollLeft.value, max)
+  }
+  else {
+    const max = Math.max(0, content.value.offsetHeight - container.value.offsetHeight)
+    scrollTop.value = Math.min(scrollTop.value, max)
+  }
+}
+
+function reset() {
+  scrollLeft.value = 0
+  scrollTop.value = 0
+}
+
+let resizeObserver = null
+
 onMounted(() => {
   window.addEventListener('mouseup', endDrag)
+
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => clampScroll())
+    if (container.value)
+      resizeObserver.observe(container.value)
+    if (content.value)
+      resizeObserver.observe(content.value)
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('mouseup', endDrag)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
 })
 
 defineExpose({
@@ -214,6 +250,8 @@ defineExpose({
   scrollToEnd,
   scrollForward,
   scrollBackward,
+  clampScroll,
+  reset,
 })
 </script>
 

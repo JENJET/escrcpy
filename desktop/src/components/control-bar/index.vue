@@ -322,10 +322,18 @@ export default {
   },
   watch: {
     vertical() {
-      this.$nextTick(() => this.checkOverflow())
+      // Layout direction changed: reset scroll and re-measure overflow.
+      this.$nextTick(() => {
+        this.$refs.scrollableRef?.reset()
+        this.checkOverflow()
+      })
     },
     controlModel() {
       this.$nextTick(() => this.checkOverflow())
+    },
+    overflowing(value) {
+      if (!value)
+        this.$refs.scrollableRef?.reset()
     },
   },
   mounted() {
@@ -337,9 +345,6 @@ export default {
     if (typeof ResizeObserver !== 'undefined') {
       this.resizeObserver = new ResizeObserver(() => this.checkOverflow())
       this.resizeObserver.observe(this.$el)
-      const content = this.$refs.scrollableRef?.$el?.firstElementChild
-      if (content)
-        this.resizeObserver.observe(content)
     }
   },
   beforeUnmount() {

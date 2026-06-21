@@ -1,6 +1,6 @@
 import { createWindowManager } from '@escrcpy/electron-setup/main'
 import { trySend } from '$electron/helpers/index.js'
-import { sidebarBtnCount, sidebarBtnHeight, sidebarBtnWidth, sidebarLandscapeHeight, sidebarNavBtnSize, sidebarWidth } from '$sidebar/configs/index.js'
+import { sidebarBtnCount, sidebarBtnHeight, sidebarBtnWidth, sidebarLandscapeHeight, sidebarWidth } from '$sidebar/configs/index.js'
 import { ipcMain } from 'electron'
 import { spawn } from 'node:child_process'
 import { join } from 'node:path'
@@ -39,8 +39,8 @@ function getDimensions(btnCount) {
   const count = Math.max(1, btnCount || sidebarBtnCount)
   return {
     pw: sidebarWidth,
-    ph: count * sidebarBtnHeight + 2 * sidebarNavBtnSize,
-    lw: count * sidebarBtnWidth + 2 * sidebarNavBtnSize,
+    ph: count * sidebarBtnHeight,
+    lw: count * sidebarBtnWidth,
     lh: sidebarLandscapeHeight,
   }
 }
@@ -64,13 +64,6 @@ function startTracker(win, title, pw, ph, lw, lh) {
     const width = w || (orientation === 1 ? dims.lw : dims.pw)
     const height = h || (orientation === 1 ? dims.lh : dims.ph)
     win.setBounds({ x, y, width, height })
-  }
-
-  function applySize(w, h) {
-    if (win.isDestroyed() || !w || !h)
-      return
-    const b = win.getBounds()
-    win.setBounds({ x: b.x, y: b.y, width: w, height: h })
   }
 
   function sendOrientation(val) {
@@ -108,11 +101,6 @@ function startTracker(win, title, pw, ph, lw, lh) {
           if (line.startsWith('ORIENTATION')) {
             const val = Number(line.split(/\s+/)[1] || 0)
             sendOrientation(val)
-          }
-          else if (line.startsWith('SIZE')) {
-            // Tracker resized the sidebar to fit the (possibly shrunk) mirror
-            const parts = line.split(/\s+/)
-            applySize(Number(parts[1]), Number(parts[2]))
           }
           else if (line.startsWith('FOUND')) {
             retries = 0

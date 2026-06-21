@@ -67,11 +67,7 @@ class T
 
     SetWindowPos(_sb, IntPtr.Zero, _sx, _sy, sw, sh, 0x0004 | 0x0010);
 
-    if (sw != _lsw || sh != _lsh)
-    {
-      _lsw = sw; _lsh = sh;
-      Console.WriteLine("SIZE " + sw + " " + sh);
-    }
+    _lsw = sw; _lsh = sh;
 
     if (isLandscape != _landscape)
     {
