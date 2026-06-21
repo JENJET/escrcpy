@@ -5,45 +5,28 @@
       :class="focusFlag ? 'opacity-100' : 'opacity-50'"
     >
       <div class="flex-none h-full">
-        <el-button
-          type="primary"
-          class="!px-3 bg-transparent !border-none !h-full"
-          plain
-          @click="handleClose"
-        >
+        <el-button type="primary" class="!px-3 bg-transparent !border-none !h-full" plain @click="handleClose">
           <el-icon class="">
             <ElIconCircleCloseFilled />
           </el-icon>
         </el-button>
       </div>
 
-      <div
-        class="h-4 w-px mx-1 bg-primary-200 dark:bg-primary-800 flex-none"
-      ></div>
+      <div class="h-4 w-px mx-1 bg-primary-200 dark:bg-primary-800 flex-none"></div>
 
       <div class="flex-none h-full">
-        <el-button
-          type="primary"
-          text
-          class="!px-2 !h-full"
-          icon="ArrowDown"
-          @click="switchDevice"
-        >
+        <el-button type="primary" text class="!px-2 !h-full" icon="ArrowDown" @click="switchDevice">
           <span class="mr-2">{{ deviceName }}</span>
         </el-button>
       </div>
 
-      <div
-        class="h-4 w-px mx-1 bg-primary-200 dark:bg-primary-800 flex-none"
-      ></div>
+      <div class="h-4 w-px mx-1 bg-primary-200 dark:bg-primary-800 flex-none"></div>
 
-      <div class="flex-1 w-0 overflow-hidden h-full">
+      <div class="flex-1 w-0 overflow-hidden h-full flex items-center">
         <ControlBar :device="currentDevice" floating />
       </div>
 
-      <div
-        class="h-4 w-px mx-1 bg-primary-200 dark:bg-primary-800 flex-none"
-      ></div>
+      <div class="h-4 w-px mx-1 bg-primary-200 dark:bg-primary-800 flex-none"></div>
 
       <div class="flex-none h-full app-region-drag">
         <el-button type="primary" text class="!px-3 !h-full">

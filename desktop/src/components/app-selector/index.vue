@@ -1,12 +1,7 @@
 <template>
   <el-dropdown
-    ref="dropdownRef"
-    :trigger="trigger"
-    :max-height="maxHeight"
-    v-bind="$attrs"
-    @visible-change="onVisibleChange"
-    @mouseenter="loadAppList"
-    @keydown.stop
+    ref="dropdownRef" :trigger="trigger" :max-height="maxHeight" class="w-full" v-bind="$attrs"
+    @visible-change="onVisibleChange" @mouseenter="loadAppList" @keydown.stop
   >
     <slot :current="current" :loading="loading" />
 
@@ -20,22 +15,12 @@
 
       <el-dropdown-menu v-else class="!p-0">
         <div class="sticky top-0 z-10 px-2 py-2 bg-[var(--el-bg-color-overlay)] border-b dark:border-gray-700">
-          <el-input
-            v-model="keyword"
-            class="!w-full"
-            :placeholder="$t('common.search')"
-            prefix-icon="Search"
-          />
+          <el-input v-model="keyword" class="!w-full" :placeholder="$t('common.search')" prefix-icon="Search" />
         </div>
 
         <el-dropdown-item
-          v-for="item of options"
-          :key="item.value"
-          :command="item.value"
-          :divided="item.divided"
-          :icon="item.icon"
-          :title="item.packageName"
-          @click="onSelect(item)"
+          v-for="item of options" :key="item.value" :command="item.value" :divided="item.divided"
+          :icon="item.icon" :title="item.packageName" @click="onSelect(item)"
         >
           <div :class="[labelClass]">
             {{ item.label }}

@@ -1,18 +1,11 @@
 <template>
   <div
-    ref="container"
-    class="overflow-auto scrollable"
-    :class="{ 'cursor-grab': !isDragging && !disabledDrag, 'cursor-grabbing': isDragging }"
-    @mousedown="startDrag"
-    @mousemove="onDrag"
-    @mouseup="endDrag"
-    @mouseleave="endDrag"
-    @wheel="onWheel"
+    ref="container" class="overflow-auto scrollable"
+    :class="{ 'cursor-grab': !isDragging && !disabledDrag, 'cursor-grabbing': isDragging }" @mousedown="startDrag"
+    @mousemove="onDrag" @mouseup="endDrag" @mouseleave="endDrag" @wheel="onWheel"
   >
     <div
-      ref="content"
-      class="inline-flex"
-      :class="[contentClass, { 'flex-col': direction === 'vertical' }]"
+      ref="content" class="inline-flex" :class="[contentClass, { 'flex-col': direction === 'vertical' }]"
       :style="contentStyle"
     >
       <slot></slot>
@@ -61,7 +54,7 @@ const contentStyle = computed(() => ({
   transition: isDragging.value ? 'none' : 'transform 0.3s ease-out',
 }))
 
-const startDrag = (e) => {
+function startDrag(e) {
   if (props.disabledDrag) {
     return false
   }
@@ -72,13 +65,14 @@ const startDrag = (e) => {
   container.value.style.cursor = 'grabbing'
 }
 
-const onDrag = (e) => {
+function onDrag(e) {
   if (props.disabledDrag) {
     return false
   }
 
-  if (!isDragging.value)
+  if (!isDragging.value) {
     return
+  }
   e.preventDefault()
   const x = e.pageX - container.value.offsetLeft
   const y = e.pageY - container.value.offsetTop
@@ -108,7 +102,7 @@ const onDrag = (e) => {
   startY.value = y
 }
 
-const endDrag = () => {
+function endDrag() {
   if (props.disabledDrag) {
     return false
   }
@@ -117,7 +111,7 @@ const endDrag = () => {
   container.value.style.cursor = 'grab'
 }
 
-const onWheel = (e) => {
+function onWheel(e) {
   e.preventDefault()
   const delta
     = props.direction === 'horizontal' ? e.deltaX || e.deltaY : e.deltaY
@@ -145,29 +139,43 @@ const onWheel = (e) => {
   }
 }
 
-const getIncrement = () => {
+function getIncrement() {
   return 100 * props.speed
 }
 
-const scrollToEnd = () => {
-  if (props.direction === 'horizontal') {
-    const maxScroll = Math.max(
-      0,
-      content.value.offsetWidth - container.value.offsetWidth,
-    )
+function scrollToStart() {
+  const maxScroll = props.direction === 'horizontal'
+    ? content.value.offsetWidth - container.value.offsetWidth
+    : content.value.offsetHeight - container.value.offsetHeight
 
+  if (maxScroll <= 0) {
+    scrollBackward()
+  }
+  else if (props.direction === 'horizontal') {
+    scrollLeft.value = 0
+  }
+  else {
+    scrollTop.value = 0
+  }
+}
+
+function scrollToEnd() {
+  const maxScroll = props.direction === 'horizontal'
+    ? content.value.offsetWidth - container.value.offsetWidth
+    : content.value.offsetHeight - container.value.offsetHeight
+
+  if (maxScroll <= 0) {
+    scrollForward()
+  }
+  else if (props.direction === 'horizontal') {
     scrollLeft.value = maxScroll
   }
   else {
-    const maxScroll = Math.max(
-      0,
-      content.value.offsetHeight - container.value.offsetHeight,
-    )
     scrollTop.value = maxScroll
   }
 }
 
-const scrollForward = () => {
+function scrollForward() {
   const increment = getIncrement()
   if (props.direction === 'horizontal') {
     scrollLeft.value = Math.min(
@@ -183,7 +191,7 @@ const scrollForward = () => {
   }
 }
 
-const scrollBackward = () => {
+function scrollBackward() {
   const increment = getIncrement()
   if (props.direction === 'horizontal') {
     scrollLeft.value = Math.max(scrollLeft.value - increment, 0)
@@ -202,6 +210,7 @@ onUnmounted(() => {
 })
 
 defineExpose({
+  scrollToStart,
   scrollToEnd,
   scrollForward,
   scrollBackward,

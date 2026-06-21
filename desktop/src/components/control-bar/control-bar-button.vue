@@ -1,19 +1,12 @@
 <template>
-  <SwapyItem
-    :class="[buttonClass, vertical ? 'w-full' : 'flex-none']"
-    v-bind="{ slotId: item.id, itemId: item.id }"
-  >
+  <SwapyItem :class="[buttonClass, vertical ? 'w-full' : 'flex-none']" v-bind="{ slotId: item.id, itemId: item.id }">
     <component :is="item.component || 'div'" v-bind="{ device, floating, vertical }">
       <template #default="{ loading = false, trigger } = {}">
         <el-button
-          type="primary" plain
-          class="!border-none !mx-0 !py-0 bg-transparent !rounded-0"
+          type="primary" plain class="!border-none !mx-0 !py-0 !min-h-0 bg-transparent !rounded-0"
           :class="[['unauthorized', 'offline'].includes(device.status) ? '!bg-transparent' : '', buttonClass, vertical ? '!w-full' : '']"
-          :style="{ ...buttonStyle }"
-          :disabled="['unauthorized', 'offline'].includes(device.status)"
-          :title="$t(item.tips || item.label)"
-          :loading="loading"
-          @click="handleClick($event, trigger || item.trigger)"
+          :style="{ ...buttonStyle }" :disabled="['unauthorized', 'offline'].includes(device.status)"
+          :title="$t(item.tips || item.label)" :loading="loading" @click="handleClick($event, trigger || item.trigger)"
         >
           <template #icon>
             <el-icon v-if="item.elIcon" :class="item.iconClass">

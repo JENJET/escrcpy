@@ -1,7 +1,6 @@
 import { createWindowManager } from '@escrcpy/electron-setup/main'
 import { trySend } from '$electron/helpers/index.js'
-import { controlBarHeight } from '$control/configs/index.js'
-import { sidebarWidth } from '$sidebar/configs/index.js'
+import { sidebarBtnCount, sidebarBtnHeight, sidebarBtnWidth, sidebarLandscapeHeight, sidebarNavBtnSize, sidebarWidth } from '$sidebar/configs/index.js'
 import { ipcMain } from 'electron'
 import { spawn } from 'node:child_process'
 import { join } from 'node:path'
@@ -10,13 +9,8 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = join(fileURLToPath(import.meta.url), '..')
 
-const SIDEBAR_BTN_COUNT = 15
-const SIDEBAR_HEIGHT = SIDEBAR_BTN_COUNT * controlBarHeight
-const cfg = { sw: sidebarWidth, ch: controlBarHeight, height: SIDEBAR_HEIGHT }
-
 let _exe = null
 
-// Search paths for t.exe binary
 function findExe(name) {
   const candidates = [
     join(process.resourcesPath || '', 'extra', 'win', name),
@@ -29,7 +23,7 @@ function findExe(name) {
       if (existsSync(p))
         return p
     }
-    catch {}
+    catch { }
   }
   return ''
 }
@@ -41,23 +35,47 @@ function getExe() {
   return _exe
 }
 
-// Spawn and manage t.exe tracker for a sidebar window
-function startTracker(win, title, height) {
+function getDimensions(btnCount) {
+  const count = Math.max(1, btnCount || sidebarBtnCount)
+  return {
+    pw: sidebarWidth,
+    ph: count * sidebarBtnHeight + 2 * sidebarNavBtnSize,
+    lw: count * sidebarBtnWidth + 2 * sidebarNavBtnSize,
+    lh: sidebarLandscapeHeight,
+  }
+}
+
+function startTracker(win, title, pw, ph, lw, lh) {
   if (!title || !win || win.isDestroyed() || !getExe())
-    return () => {}
+    return () => { }
 
   let proc = null
-  // closed=true means CLOSE was received (mirror window destroyed)
   let closed = false
   let killed = false
   let retries = 0
   let pending = false
+  let orientation = 0 // 0=portrait, 1=landscape
+
+  const dims = { pw, ph, lw, lh }
+
+  function applyBounds(x, y) {
+    if (win.isDestroyed())
+      return
+    const w = orientation === 1 ? dims.lw : dims.pw
+    const h = orientation === 1 ? dims.lh : dims.ph
+    win.setBounds({ x, y, width: w, height: h })
+  }
+
+  function sendOrientation(val) {
+    if (win.isDestroyed())
+      return
+    orientation = val
+    trySend(win, 'sidebar-orientation', val)
+  }
 
   function start() {
-    // No retry limit: keep spawning on crash until closed/killed
-    if (pending || killed || win.isDestroyed()) {
+    if (pending || killed || win.isDestroyed())
       return
-    }
     pending = true
 
     try {
@@ -68,59 +86,58 @@ function startTracker(win, title, height) {
       }
 
       const hwnd = Number(win.getNativeWindowHandle().readBigUInt64LE(0))
-      proc = spawn(exe, [String(hwnd), title, String(height), String(cfg.sw)], {
-        stdio: ['ignore', 'pipe', 'ignore'],
+      proc = spawn(exe, [String(hwnd), title, String(dims.pw), String(dims.ph), String(dims.lw), String(dims.lh)], {
+        stdio: ['pipe', 'pipe', 'ignore'],
         detached: false,
       })
       pending = false
-
       closed = false
 
-      // Handle stdout signals from t.exe
       proc.stdout.on('data', (data) => {
         if (win.isDestroyed())
           return
         const str = data.toString()
-        // FOUND: initial attach successful, position sidebar
-        if (str.includes('FOUND')) {
-          retries = 0
-          const [, x, y] = str.split(/\s+/)
-          win.show()
-          win.moveTop()
-          if (x && y)
-            win.setBounds({ x: Number(x), y: Number(y), width: cfg.sw, height: cfg.height })
-        }
-        // PROCESS_EXIT / CLOSE_CONFIRMED: scrcpy actually exited
-        else if (str.includes('PROCESS_EXIT') || str.includes('CLOSE_CONFIRMED')) {
-          win.close()
-        }
-        // RECOVER: mirror window recreated after DESTROY
-        else if (str.includes('RECOVER')) {
-          closed = false
-          retries = 0
-          const parts = str.split(/\s+/)
-          if (parts[1] && parts[2])
-            win.setBounds({ x: Number(parts[1]), y: Number(parts[2]), width: cfg.sw, height: cfg.height })
-        }
-        // CLOSE: mirror window destroyed, t.exe handles recovery internally
-        else if (str.includes('CLOSE')) {
-          closed = true
+        for (const line of str.split('\n').filter(Boolean)) {
+          if (line.startsWith('ORIENTATION')) {
+            const val = Number(line.split(/\s+/)[1] || 0)
+            sendOrientation(val)
+            // Sync window size to match new orientation
+            const w = val === 1 ? dims.lw : dims.pw
+            const h = val === 1 ? dims.lh : dims.ph
+            const b = win.getBounds()
+            win.setBounds({ x: b.x, y: b.y, width: w, height: h })
+          }
+          else if (line.startsWith('FOUND')) {
+            retries = 0
+            const parts = line.split(/\s+/)
+            if (parts[1] && parts[2])
+              applyBounds(Number(parts[1]), Number(parts[2]))
+            win.show()
+            win.moveTop()
+          }
+          else if (line.includes('PROCESS_EXIT') || line.includes('CLOSE_CONFIRMED')) {
+            win.close()
+          }
+          else if (line.startsWith('RECOVER')) {
+            closed = false
+            retries = 0
+          }
+          else if (line.includes('CLOSE')) {
+            closed = true
+          }
         }
       })
 
-      // On t.exe exit: retry on crash, stop on killed/closed
       proc.on('exit', () => {
         if (killed || win.isDestroyed())
           return
-        // If CLOSE was received but recovery was interrupted, retry fresh
-        if (closed) {
+        if (closed)
           closed = false
-        }
         retries++
         setTimeout(start, 1000)
       })
 
-      proc.on('error', () => {})
+      proc.on('error', () => { })
     }
     catch {
       pending = false
@@ -131,14 +148,13 @@ function startTracker(win, title, height) {
 
   start()
 
-  // Kill the tracker process (called when sidebar closes)
   const kill = () => {
     killed = true
     try {
       if (proc)
         proc.kill()
     }
-    catch {}
+    catch { }
   }
 
   return kill
@@ -148,10 +164,10 @@ export default {
   name: 'module:sidebar:window',
   apply(mainApp) {
     const managers = new Map()
+    const trackers = new Map()
 
-    // Create a sidebar window for a device mirror
     function onOpen(event, data) {
-      const { mirrorId, deviceId, mirrorTitle } = data
+      const { mirrorId, deviceId, mirrorTitle, btnCount } = data
       if (!mirrorId || !mirrorTitle)
         return
 
@@ -166,7 +182,7 @@ export default {
       }
 
       const uid = `sidebar_${mirrorId}`
-      let stopTracker = null
+      const dims = getDimensions(btnCount)
 
       const manager = createWindowManager(uid, {
         singleton: false,
@@ -174,8 +190,8 @@ export default {
           frame: false,
           resizable: false,
           backgroundColor: '#1f2937',
-          width: cfg.sw,
-          height: cfg.height,
+          width: dims.pw,
+          height: dims.ph,
           skipTaskbar: true,
           show: false,
           hasShadow: false,
@@ -184,11 +200,15 @@ export default {
         hooks: {
           ready(win) {
             trySend(win, 'device-change', { id: deviceId })
-            stopTracker = startTracker(win, mirrorTitle, cfg.height)
+            const stopTracker = startTracker(win, mirrorTitle, dims.pw, dims.ph, dims.lw, dims.lh)
+            trackers.set(mirrorId, stopTracker)
           },
           closed() {
-            if (stopTracker)
+            const stopTracker = trackers.get(mirrorId)
+            if (stopTracker) {
               stopTracker()
+              trackers.delete(mirrorId)
+            }
             managers.delete(mirrorId)
           },
         },
@@ -198,7 +218,6 @@ export default {
       manager.open({ mirrorId, deviceId, mirrorTitle, page: 'pages/sidebar', show: false })
     }
 
-    // Close sidebar via IPC (from preload when scrcpy exits)
     function onClose(event, mirrorId) {
       const manager = managers.get(mirrorId)
       if (manager) {
@@ -215,12 +234,16 @@ export default {
     return () => {
       ipcMain.removeListener('sidebar-open', onOpen)
       ipcMain.removeListener('sidebar-close', onClose)
-      for (const manager of managers.values()) {
-        const win = manager.get()
+      for (const entry of managers.values()) {
+        const win = entry?.get?.()
         if (win && !win.isDestroyed())
           win.close()
       }
+      for (const stopTracker of trackers.values()) {
+        stopTracker()
+      }
       managers.clear()
+      trackers.clear()
     }
   },
 }

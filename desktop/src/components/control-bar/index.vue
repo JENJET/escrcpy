@@ -1,63 +1,109 @@
 <template>
   <div
     class="bg-primary-100 dark:bg-gray-800 group overflow-hidden"
-    :class="vertical ? 'flex-col' : 'flex'"
+    :class="[vertical ? 'flex-col' : 'flex', sidebar ? 'h-full' : '', !vertical ? 'items-center' : '']"
+    :style="!sidebar && !vertical ? { height: `${buttonHeight}px` } : {}"
   >
-    <el-button
-      v-if="!vertical"
-      type="primary"
-      class="el-button-nav"
-      :style="{ ...buttonHeightStyle }"
-      title="Prev"
-      @click="handlePrev"
-    >
-      <el-icon><CaretLeft /></el-icon>
-    </el-button>
-
-    <Scrollable v-if="!vertical" ref="scrollableRef" class="flex-1 min-w-0" disabled-drag>
-      <Swapy
-        :key="controlStore.swapyKey"
-        :enabled="swapyEnabled"
-        class="flex items-center"
-        :class="floating ? '!h-full' : ''"
-        :config="{ animation: 'dynamic', dragAxis: 'x', autoScrollOnDrag: false }"
-        @swap-end="onSwapEnd"
+    <template v-if="sidebar && !vertical">
+      <el-button
+        plain class="el-button-nav-sidebar !h-full !min-h-0"
+        :style="{ width: `${navBtnSize}px`, lineHeight: `${navBtnSize}px` }" title="Prev" @click="handlePrev"
+      >
+        <el-icon>
+          <CaretLeft />
+        </el-icon>
+      </el-button>
+      <Scrollable
+        ref="scrollableRef" class="flex-1 min-w-0" disabled-drag direction="horizontal"
+        content-class="!h-full !items-center"
       >
         <ControlBarButton
-          v-for="item of controlModel"
-          :key="item.id"
-          :item="item" :device="device" :floating="floating"
+          v-for="item of controlModel" :key="item.id" :item="item" :device="device" :floating="floating"
           :button-class="buttonClass" :button-style="buttonStyle"
         />
-      </Swapy>
-    </Scrollable>
-    <div v-else class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
-      <Swapy
-        :key="controlStore.swapyKey"
-        :enabled="swapyEnabled"
-        class="flex flex-col items-center"
-        :config="{ animation: 'dynamic', dragAxis: 'y', autoScrollOnDrag: false }"
-        @swap-end="onSwapEnd"
+      </Scrollable>
+      <el-button
+        plain class="el-button-nav-sidebar !h-full !min-h-0"
+        :style="{ width: `${navBtnSize}px`, lineHeight: `${navBtnSize}px` }" title="Next" @click="handleNext"
+      >
+        <el-icon>
+          <CaretRight />
+        </el-icon>
+      </el-button>
+    </template>
+    <template v-else-if="sidebar && vertical">
+      <el-button
+        plain class="el-button-nav-sidebar !w-full !min-h-0"
+        :style="{ height: `${navBtnSize}px`, lineHeight: `${navBtnSize}px` }" title="Prev" @click="handlePrev"
+      >
+        <el-icon>
+          <CaretUp />
+        </el-icon>
+      </el-button>
+      <Scrollable
+        ref="scrollableRef" class="flex-1 min-h-0" disabled-drag direction="vertical"
+        content-class="!w-full !items-center"
       >
         <ControlBarButton
-          v-for="item of controlModel"
-          :key="item.id"
-          :item="item" :device="device" :floating="floating"
+          v-for="item of controlModel" :key="item.id" :item="item" :device="device" :floating="floating"
           :button-class="buttonClass" :button-style="buttonStyle" vertical
         />
-      </Swapy>
-    </div>
+      </Scrollable>
+      <el-button
+        plain class="el-button-nav-sidebar !w-full !min-h-0"
+        :style="{ height: `${navBtnSize}px`, lineHeight: `${navBtnSize}px` }" title="Next" @click="handleNext"
+      >
+        <el-icon>
+          <CaretDown />
+        </el-icon>
+      </el-button>
+    </template>
+    <template v-else>
+      <div
+        class="el-button-nav flex items-center justify-center cursor-pointer" :style="{ ...buttonHeightStyle }"
+        title="Prev" @click="handlePrev"
+      >
+        <el-icon>
+          <CaretLeft />
+        </el-icon>
+      </div>
 
-    <el-button
-      v-if="!vertical"
-      type="primary"
-      class="el-button-nav"
-      :style="{ ...buttonHeightStyle }"
-      title="Next"
-      @click="handleNext"
-    >
-      <el-icon><CaretRight /></el-icon>
-    </el-button>
+      <Scrollable
+        v-if="!vertical" ref="scrollableRef" class="flex-1 min-w-0" disabled-drag
+        content-class="!h-full !items-center"
+      >
+        <Swapy
+          :key="controlStore.swapyKey" :enabled="swapyEnabled" class="flex items-center"
+          :class="floating ? '!h-full' : ''" :config="{ animation: 'dynamic', dragAxis: 'x', autoScrollOnDrag: false }"
+          @swap-end="onSwapEnd"
+        >
+          <ControlBarButton
+            v-for="item of controlModel" :key="item.id" :item="item" :device="device"
+            :floating="floating" :button-class="buttonClass" :button-style="buttonStyle"
+          />
+        </Swapy>
+      </Scrollable>
+      <div v-else class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
+        <Swapy
+          :key="controlStore.swapyKey" :enabled="swapyEnabled" class="flex flex-col items-center"
+          :config="{ animation: 'dynamic', dragAxis: 'y', autoScrollOnDrag: false }" @swap-end="onSwapEnd"
+        >
+          <ControlBarButton
+            v-for="item of controlModel" :key="item.id" :item="item" :device="device"
+            :floating="floating" :button-class="buttonClass" :button-style="buttonStyle" vertical
+          />
+        </Swapy>
+      </div>
+
+      <div
+        class="el-button-nav flex items-center justify-center cursor-pointer" :style="{ ...buttonHeightStyle }"
+        title="Next" @click="handleNext"
+      >
+        <el-icon>
+          <CaretRight />
+        </el-icon>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -102,6 +148,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    sidebar: {
+      type: Boolean,
+      default: false,
+    },
     swapyEnabled: {
       type: Boolean,
       default: false,
@@ -109,6 +159,14 @@ export default {
     buttonHeight: {
       type: Number,
       default: controlBarHeight,
+    },
+    buttonWidth: {
+      type: Number,
+      default: 0,
+    },
+    navBtnSize: {
+      type: Number,
+      default: 16,
     },
     buttonClass: {
       type: String,
@@ -241,6 +299,9 @@ export default {
       if (this.vertical) {
         return { height: `${this.buttonHeight}px !important`, width: '100%' }
       }
+      if (this.sidebar && this.buttonWidth) {
+        return { width: `${this.buttonWidth}px !important` }
+      }
       if (!this.buttonHeight) {
         return {}
       }
@@ -258,10 +319,10 @@ export default {
   },
   methods: {
     handlePrev() {
-      this.$refs.scrollableRef.scrollBackward()
+      this.$refs.scrollableRef?.scrollToStart()
     },
     handleNext() {
-      this.$refs.scrollableRef.scrollForward()
+      this.$refs.scrollableRef?.scrollToEnd()
     },
     onSwapEnd(event) {
       const value = event.slotItemMap.asArray.map(obj => obj.item)
@@ -279,10 +340,18 @@ export default {
 
 .el-button.el-button-nav {
   @apply !flex-none !flex !items-center !justify-center;
-  @apply !w-4 !p-0;
+  @apply !w-4 !p-0 !leading-4 !min-h-0;
   @apply !border-0 !rounded-none;
   @apply !opacity-0 !group-hover:opacity-100 !transition-opacity;
   @apply !bg-primary-100 !dark:bg-gray-800;
+  @apply !hover:bg-primary-300 !active:bg-primary-500;
+  @apply !text-primary-600 !hover:text-white;
+}
+
+.el-button.el-button-nav-sidebar {
+  @apply !flex-none !flex !items-center !justify-center;
+  @apply !p-0 !leading-4 !min-h-0 !border-0 !rounded-none;
+  @apply !bg-transparent !background-transparent !opacity-0;
   @apply !hover:bg-primary-300 !active:bg-primary-500;
   @apply !text-primary-600 !hover:text-white;
 }
