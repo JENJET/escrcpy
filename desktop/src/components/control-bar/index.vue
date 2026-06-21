@@ -6,7 +6,7 @@
   >
     <template v-if="sidebar && !vertical">
       <el-button
-        plain class="el-button-nav-sidebar !h-full !min-h-0"
+        v-show="overflowing" plain class="el-button-nav-sidebar !h-full !min-h-0"
         :style="{ width: `${navBtnSize}px`, lineHeight: `${navBtnSize}px` }" title="Prev" @click="handlePrev"
       >
         <el-icon>
@@ -23,7 +23,7 @@
         />
       </Scrollable>
       <el-button
-        plain class="el-button-nav-sidebar !h-full !min-h-0"
+        v-show="overflowing" plain class="el-button-nav-sidebar !h-full !min-h-0"
         :style="{ width: `${navBtnSize}px`, lineHeight: `${navBtnSize}px` }" title="Next" @click="handleNext"
       >
         <el-icon>
@@ -33,7 +33,7 @@
     </template>
     <template v-else-if="sidebar && vertical">
       <el-button
-        plain class="el-button-nav-sidebar !w-full !min-h-0"
+        v-show="overflowing" plain class="el-button-nav-sidebar !w-full !min-h-0"
         :style="{ height: `${navBtnSize}px`, lineHeight: `${navBtnSize}px` }" title="Prev" @click="handlePrev"
       >
         <el-icon>
@@ -50,7 +50,7 @@
         />
       </Scrollable>
       <el-button
-        plain class="el-button-nav-sidebar !w-full !min-h-0"
+        v-show="overflowing" plain class="el-button-nav-sidebar !w-full !min-h-0"
         :style="{ height: `${navBtnSize}px`, lineHeight: `${navBtnSize}px` }" title="Next" @click="handleNext"
       >
         <el-icon>
@@ -181,7 +181,10 @@ export default {
     }
   },
   data() {
-    return {}
+    return {
+      overflowing: false,
+      resizeObserver: null,
+    }
   },
   computed: {
     controlModel() {
@@ -317,7 +320,52 @@ export default {
       }
     },
   },
+  watch: {
+    vertical() {
+      this.$nextTick(() => this.checkOverflow())
+    },
+    controlModel() {
+      this.$nextTick(() => this.checkOverflow())
+    },
+  },
+  mounted() {
+    if (!this.sidebar)
+      return
+
+    this.$nextTick(() => this.checkOverflow())
+
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => this.checkOverflow())
+      this.resizeObserver.observe(this.$el)
+      const content = this.$refs.scrollableRef?.$el?.firstElementChild
+      if (content)
+        this.resizeObserver.observe(content)
+    }
+  },
+  beforeUnmount() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect()
+      this.resizeObserver = null
+    }
+  },
   methods: {
+    checkOverflow() {
+      if (!this.sidebar) {
+        this.overflowing = false
+        return
+      }
+
+      const root = this.$el
+      const content = this.$refs.scrollableRef?.$el?.firstElementChild
+      if (!root || !content) {
+        this.overflowing = false
+        return
+      }
+
+      this.overflowing = this.vertical
+        ? content.offsetHeight > root.offsetHeight + 0.5
+        : content.offsetWidth > root.offsetWidth + 0.5
+    },
     handlePrev() {
       this.$refs.scrollableRef?.scrollToStart()
     },
@@ -351,7 +399,8 @@ export default {
 .el-button.el-button-nav-sidebar {
   @apply !flex-none !flex !items-center !justify-center;
   @apply !p-0 !leading-4 !min-h-0 !border-0 !rounded-none;
-  @apply !bg-transparent !background-transparent !opacity-0;
+  @apply !bg-transparent !background-transparent;
+  @apply !opacity-60 !group-hover:opacity-100 !transition-opacity;
   @apply !hover:bg-primary-300 !active:bg-primary-500;
   @apply !text-primary-600 !hover:text-white;
 }

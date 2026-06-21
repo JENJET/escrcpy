@@ -33,6 +33,7 @@ class T
   static int _pw, _ph, _lw, _lh;
   static int _lpw, _lph, _lpx, _lpy; // last known mirror pos/size
   static int _sx, _sy; // last computed sidebar screen position
+  static int _lsw, _lsh; // last computed sidebar size
   static bool _landscape; // current orientation
   static IntPtr _hProc = IntPtr.Zero;
 
@@ -49,18 +50,28 @@ class T
 
     if (isLandscape)
     {
-      sw = _lw; sh = _lh;
+      // Shrink sidebar width to the mirror width when the mirror is narrower,
+      // keeping it horizontally centered below the mirror.
+      sw = Math.Min(_lw, cr.R); sh = _lh;
       _sx = p.X + (cr.R - sw) / 2;
       _sy = p.Y + cr.B;
     }
     else
     {
-      sw = _pw; sh = _ph;
+      // Shrink sidebar height to the mirror height when the mirror is shorter,
+      // keeping it vertically centered to the right of the mirror.
+      sw = _pw; sh = Math.Min(_ph, cr.B);
       _sx = p.X + cr.R;
       _sy = p.Y + (cr.B - sh) / 2;
     }
 
     SetWindowPos(_sb, IntPtr.Zero, _sx, _sy, sw, sh, 0x0004 | 0x0010);
+
+    if (sw != _lsw || sh != _lsh)
+    {
+      _lsw = sw; _lsh = sh;
+      Console.WriteLine("SIZE " + sw + " " + sh);
+    }
 
     if (isLandscape != _landscape)
     {
@@ -182,7 +193,7 @@ class T
       }
     }
     if (_sx == 0 && _sy == 0) return 1;
-    Console.WriteLine("FOUND " + _sx + " " + _sy);
+    Console.WriteLine("FOUND " + _sx + " " + _sy + " " + _lsw + " " + _lsh);
 
     // Get scrcpy process handle for exit detection
     uint pid;

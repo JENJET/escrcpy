@@ -58,12 +58,19 @@ function startTracker(win, title, pw, ph, lw, lh) {
 
   const dims = { pw, ph, lw, lh }
 
-  function applyBounds(x, y) {
+  function applyBounds(x, y, w, h) {
     if (win.isDestroyed())
       return
-    const w = orientation === 1 ? dims.lw : dims.pw
-    const h = orientation === 1 ? dims.lh : dims.ph
-    win.setBounds({ x, y, width: w, height: h })
+    const width = w || (orientation === 1 ? dims.lw : dims.pw)
+    const height = h || (orientation === 1 ? dims.lh : dims.ph)
+    win.setBounds({ x, y, width, height })
+  }
+
+  function applySize(w, h) {
+    if (win.isDestroyed() || !w || !h)
+      return
+    const b = win.getBounds()
+    win.setBounds({ x: b.x, y: b.y, width: w, height: h })
   }
 
   function sendOrientation(val) {
@@ -101,17 +108,17 @@ function startTracker(win, title, pw, ph, lw, lh) {
           if (line.startsWith('ORIENTATION')) {
             const val = Number(line.split(/\s+/)[1] || 0)
             sendOrientation(val)
-            // Sync window size to match new orientation
-            const w = val === 1 ? dims.lw : dims.pw
-            const h = val === 1 ? dims.lh : dims.ph
-            const b = win.getBounds()
-            win.setBounds({ x: b.x, y: b.y, width: w, height: h })
+          }
+          else if (line.startsWith('SIZE')) {
+            // Tracker resized the sidebar to fit the (possibly shrunk) mirror
+            const parts = line.split(/\s+/)
+            applySize(Number(parts[1]), Number(parts[2]))
           }
           else if (line.startsWith('FOUND')) {
             retries = 0
             const parts = line.split(/\s+/)
             if (parts[1] && parts[2])
-              applyBounds(Number(parts[1]), Number(parts[2]))
+              applyBounds(Number(parts[1]), Number(parts[2]), Number(parts[3]), Number(parts[4]))
             win.show()
             win.moveTop()
           }
