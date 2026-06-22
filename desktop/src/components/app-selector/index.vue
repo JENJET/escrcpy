@@ -106,7 +106,8 @@ const options = computed(() => {
   if (keyword.value) {
     return value.filter((item) => {
       const pinyinLabel = pinyin(item.label, { toneType: 'none' }).replaceAll(' ', '')
-      const matchText = [item.label, item.value, pinyinLabel, pinyinLabel.toLowerCase()].join('')
+      const pinyinFirst = pinyin(item.label, { pattern: 'first', toneType: 'none' }).replaceAll(' ', '')
+      const matchText = [item.label, item.value, pinyinLabel, pinyinLabel.toLowerCase(), pinyinFirst, pinyinFirst.toLowerCase()].join('')
       return matchText.includes(keyword.value)
     })
   }

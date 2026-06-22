@@ -1,12 +1,14 @@
 <template>
   <div
-    class="bg-primary-100 dark:bg-gray-800 group overflow-hidden"
-    :class="[vertical ? 'flex-col' : 'flex', sidebar ? 'h-full' : '', !vertical ? 'items-center' : '']"
-    :style="!sidebar && !vertical ? { height: `${buttonHeight}px` } : {}"
+    class="bg-primary-100 dark:bg-gray-800 group"
+    :class="[!sidebar && !vertical ? 'flex' : '', sidebar ? 'h-full overflow-visible' : 'overflow-hidden', !vertical ? 'items-center' : '']"
+    :style="sidebar && vertical ? { '--nav-btn-size': `${navBtnSize}px`, 'display': 'grid', 'gridTemplateRows': 'var(--nav-btn-size) 1fr var(--nav-btn-size)' } : (!sidebar && !vertical ? { display: 'flex', height: `${buttonHeight}px` } : { display: 'flex' })"
   >
     <template v-if="sidebar && !vertical">
       <el-button
         plain class="el-button-nav-sidebar !h-full !min-h-0"
+        :class="isScrollOverflow ? '!opacity-100' : '!opacity-0'"
+        :disabled="!isScrollOverflow"
         :style="{ width: `${navBtnSize}px`, lineHeight: `${navBtnSize}px` }" title="Prev" @click="handlePrev"
       >
         <el-icon>
@@ -24,6 +26,8 @@
       </Scrollable>
       <el-button
         plain class="el-button-nav-sidebar !h-full !min-h-0"
+        :class="isScrollOverflow ? '!opacity-100' : '!opacity-0'"
+        :disabled="!isScrollOverflow"
         :style="{ width: `${navBtnSize}px`, lineHeight: `${navBtnSize}px` }" title="Next" @click="handleNext"
       >
         <el-icon>
@@ -34,14 +38,16 @@
     <template v-else-if="sidebar && vertical">
       <el-button
         plain class="el-button-nav-sidebar !w-full !min-h-0"
+        :class="isScrollOverflow ? '!opacity-100' : '!opacity-0'"
+        :disabled="!isScrollOverflow"
         :style="{ height: `${navBtnSize}px`, lineHeight: `${navBtnSize}px` }" title="Prev" @click="handlePrev"
       >
-        <el-icon>
-          <CaretUp />
+        <el-icon :style="{ transform: 'rotate(90deg)' }">
+          <CaretLeft />
         </el-icon>
       </el-button>
       <Scrollable
-        ref="scrollableRef" class="flex-1 min-h-0" disabled-drag direction="vertical"
+        ref="scrollableRef" class="h-full min-h-0" disabled-drag direction="vertical"
         content-class="!w-full !items-center"
       >
         <ControlBarButton
@@ -51,10 +57,12 @@
       </Scrollable>
       <el-button
         plain class="el-button-nav-sidebar !w-full !min-h-0"
+        :class="isScrollOverflow ? '!opacity-100' : '!opacity-0'"
+        :disabled="!isScrollOverflow"
         :style="{ height: `${navBtnSize}px`, lineHeight: `${navBtnSize}px` }" title="Next" @click="handleNext"
       >
-        <el-icon>
-          <CaretDown />
+        <el-icon :style="{ transform: 'rotate(90deg)' }">
+          <CaretRight />
         </el-icon>
       </el-button>
     </template>
@@ -168,6 +176,14 @@ export default {
       type: Number,
       default: 16,
     },
+    sidebarWidth: {
+      type: Number,
+      default: 0,
+    },
+    sidebarHeight: {
+      type: Number,
+      default: 0,
+    },
     buttonClass: {
       type: String,
       default: '',
@@ -179,9 +195,6 @@ export default {
     return {
       controlStore,
     }
-  },
-  data() {
-    return {}
   },
   computed: {
     controlModel() {
@@ -316,6 +329,26 @@ export default {
         height: `${this.buttonHeight}px !important`,
       }
     },
+    isScrollOverflow() {
+      if (!this.sidebar)
+        return false
+      if (this.vertical) {
+        const contentH = this.controlModel.length * this.buttonHeight
+        const availH = this.sidebarHeight - 2 * this.navBtnSize
+        return availH > 0 && contentH > availH
+      }
+      else {
+        const contentW = this.controlModel.length * (this.buttonWidth || this.navBtnSize)
+        const availW = this.sidebarWidth - 2 * this.navBtnSize
+        return availW > 0 && contentW > availW
+      }
+    },
+  },
+  watch: {
+    isScrollOverflow(val, oldVal) {
+      if (oldVal === true && val === false)
+        this.handlePrev()
+    },
   },
   methods: {
     handlePrev() {
@@ -326,7 +359,6 @@ export default {
     },
     onSwapEnd(event) {
       const value = event.slotItemMap.asArray.map(obj => obj.item)
-
       this.controlStore.setBarLayout(value)
     },
   },
@@ -351,7 +383,7 @@ export default {
 .el-button.el-button-nav-sidebar {
   @apply !flex-none !flex !items-center !justify-center;
   @apply !p-0 !leading-4 !min-h-0 !border-0 !rounded-none;
-  @apply !bg-transparent !background-transparent !opacity-0;
+  @apply !bg-transparent !background-transparent;
   @apply !hover:bg-primary-300 !active:bg-primary-500;
   @apply !text-primary-600 !hover:text-white;
 }

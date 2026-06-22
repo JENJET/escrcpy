@@ -17,6 +17,7 @@
         row-key="id"
         class="el-table--beautify"
         @selection-change="onSelectionChange"
+        @row-click="handleRowClick"
       >
         <template #empty>
           <AppEmpty v-show="!loading" :sub-title="$t('device.list.empty')">
@@ -305,6 +306,14 @@ function toggleRowExpansion(...args) {
   tableRef.value.toggleRowExpansion(...args)
 }
 
+function handleRowClick(row, column, event) {
+  if (column.type === 'selection' || column.type === 'expand')
+    return
+  if (event.target?.closest('button, a, [role="button"], .el-button, .el-dropdown, .el-select, .el-checkbox, .el-radio, .el-switch'))
+    return
+  toggleRowExpansion(row)
+}
+
 function handleConnect(...args) {
   wirelessGroupRef.value.connect(...args)
 }
@@ -338,7 +347,7 @@ onActivated(() => {
   .el-table {
     --el-empty-image-width: 24vh;
     .el-table__row .cell {
-      @apply !py-1;
+      @apply !py-1 !px-[5px];
     }
 
     .el-table__expanded-cell {

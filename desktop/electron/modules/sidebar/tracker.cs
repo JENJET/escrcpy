@@ -49,18 +49,23 @@ class T
 
     if (isLandscape)
     {
+      // Portrait sidebar width (used as landscape height) should not exceed mirror width
       sw = _lw; sh = _lh;
+      if (sw > cr.R) sw = cr.R;
       _sx = p.X + (cr.R - sw) / 2;
       _sy = p.Y + cr.B;
     }
     else
     {
+      // Portrait sidebar height should not exceed mirror height
       sw = _pw; sh = _ph;
+      if (sh > cr.B) sh = cr.B;
       _sx = p.X + cr.R;
       _sy = p.Y + (cr.B - sh) / 2;
     }
 
     SetWindowPos(_sb, IntPtr.Zero, _sx, _sy, sw, sh, 0x0004 | 0x0010);
+    Console.WriteLine("RESIZE " + sw + " " + sh);
 
     if (isLandscape != _landscape)
     {

@@ -106,6 +106,7 @@ function startTracker(win, title, pw, ph, lw, lh) {
             const h = val === 1 ? dims.lh : dims.ph
             const b = win.getBounds()
             win.setBounds({ x: b.x, y: b.y, width: w, height: h })
+            trySend(win, 'sidebar-size', { width: w, height: h })
           }
           else if (line.startsWith('FOUND')) {
             retries = 0
@@ -114,6 +115,21 @@ function startTracker(win, title, pw, ph, lw, lh) {
               applyBounds(Number(parts[1]), Number(parts[2]))
             win.show()
             win.moveTop()
+            const w = orientation === 1 ? dims.lw : dims.pw
+            const h = orientation === 1 ? dims.lh : dims.ph
+            trySend(win, 'sidebar-size', { width: w, height: h })
+          }
+          else if (line.startsWith('RESIZE')) {
+            const parts = line.split(/\s+/)
+            if (parts[1] && parts[2]) {
+              const sw = Number(parts[1])
+              const sh = Number(parts[2])
+              if (!win.isDestroyed()) {
+                const b = win.getBounds()
+                win.setBounds({ x: b.x, y: b.y, width: sw, height: sh })
+                trySend(win, 'sidebar-size', { width: sw, height: sh })
+              }
+            }
           }
           else if (line.includes('PROCESS_EXIT') || line.includes('CLOSE_CONFIRMED')) {
             win.close()
@@ -192,6 +208,8 @@ export default {
           backgroundColor: '#1f2937',
           width: dims.pw,
           height: dims.ph,
+          minHeight: 1,
+          minWidth: 1,
           skipTaskbar: true,
           show: false,
           hasShadow: false,

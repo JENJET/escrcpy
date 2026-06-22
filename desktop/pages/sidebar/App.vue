@@ -4,6 +4,7 @@
       <ControlBar
         :device="currentDevice" floating :vertical="isPortrait" sidebar :button-height="sidebarBtnHeight"
         :button-width="sidebarBtnWidth" :nav-btn-size="sidebarNavBtnSize"
+        :sidebar-width="sidebarWidth" :sidebar-height="sidebarHeight"
       />
     </div>
   </el-config-provider>
@@ -15,15 +16,22 @@ import { sidebarBtnHeight, sidebarBtnWidth, sidebarNavBtnSize } from '$sidebar/c
 
 const { currentDevice, locale } = useWindowStateSync({ deviceSync: true })
 const isPortrait = ref(true)
+const sidebarWidth = ref(0)
+const sidebarHeight = ref(0)
 
 onMounted(() => {
   window.$preload.ipcRenderer?.on?.('sidebar-orientation', (event, val) => {
     isPortrait.value = val === 0
   })
+  window.$preload.ipcRenderer?.on?.('sidebar-size', (event, { width, height }) => {
+    sidebarWidth.value = width
+    sidebarHeight.value = height
+  })
 })
 
 onUnmounted(() => {
   window.$preload.ipcRenderer?.off?.('sidebar-orientation')
+  window.$preload.ipcRenderer?.off?.('sidebar-size')
 })
 </script>
 

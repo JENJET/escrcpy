@@ -12,4 +12,4 @@ export const sidebarBtnWidth = 40
 export const sidebarLandscapeHeight = 40
 
 // 导航按钮(◀▶▲▼)在对应方向上的尺寸 (px)
-export const sidebarNavBtnSize = 8
+export const sidebarNavBtnSize = 16

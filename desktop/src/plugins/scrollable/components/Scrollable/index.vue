@@ -40,11 +40,14 @@ const props = defineProps({
 
 const container = ref(null)
 const content = ref(null)
+const isOverflow = ref(false)
 const isDragging = ref(false)
 const startX = ref(0)
 const startY = ref(0)
 const scrollLeft = ref(0)
 const scrollTop = ref(0)
+
+let _resizeObserver = null
 
 const contentStyle = computed(() => ({
   transform:
@@ -53,6 +56,17 @@ const contentStyle = computed(() => ({
       : `translateY(${-scrollTop.value}px)`,
   transition: isDragging.value ? 'none' : 'transform 0.3s ease-out',
 }))
+
+function checkOverflow() {
+  if (!container.value || !content.value)
+    return
+  if (props.direction === 'horizontal') {
+    isOverflow.value = content.value.scrollWidth > container.value.clientWidth + 1
+  }
+  else {
+    isOverflow.value = content.value.scrollHeight > container.value.clientHeight + 1
+  }
+}
 
 function startDrag(e) {
   if (props.disabledDrag) {
@@ -203,13 +217,27 @@ function scrollBackward() {
 
 onMounted(() => {
   window.addEventListener('mouseup', endDrag)
+  _resizeObserver = new ResizeObserver(() => {
+    checkOverflow()
+  })
+  if (container.value)
+    _resizeObserver.observe(container.value)
+  if (content.value)
+    _resizeObserver.observe(content.value)
 })
 
 onUnmounted(() => {
   window.removeEventListener('mouseup', endDrag)
+  if (_resizeObserver) {
+    _resizeObserver.disconnect()
+    _resizeObserver = null
+  }
 })
 
 defineExpose({
+  container,
+  isOverflow,
+  checkOverflow,
   scrollToStart,
   scrollToEnd,
   scrollForward,

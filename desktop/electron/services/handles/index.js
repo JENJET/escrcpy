@@ -16,11 +16,11 @@ export default {
           .catch(e => console.warn(e))
 
         if (res.canceled) {
-          throw new Error('User cancel operation')
+          throw new Error(t('common.userCancel'))
         }
 
         if (!res.filePaths.length) {
-          throw new Error('Get the directory or file path failure')
+          throw new Error(t('common.getPathFailure'))
         }
 
         const filePaths = res.filePaths
@@ -62,11 +62,11 @@ export default {
           .catch(e => console.warn(e))
 
         if (res.canceled) {
-          throw new Error('User cancel operation')
+          throw new Error(t('common.userCancel'))
         }
 
         if (!res.filePath) {
-          throw new Error('Failure to obtain the file path')
+          throw new Error(t('common.getPathFailure'))
         }
 
         const destinationPath = res.filePath
