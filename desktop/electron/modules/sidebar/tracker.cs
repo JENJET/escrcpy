@@ -14,6 +14,7 @@ class T
   [DllImport("user32.dll")] static extern bool IsWindow(IntPtr h);
   [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr h);
   [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int count);
   [DllImport("kernel32.dll")] static extern IntPtr OpenProcess(uint a, bool i, uint pid);
   [DllImport("kernel32.dll")] static extern uint WaitForSingleObject(IntPtr h, uint ms);
   [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr h);
@@ -28,13 +29,31 @@ class T
 
   static string _title;
   static IntPtr _mh = IntPtr.Zero;
+  static IntPtr _preferredMh = IntPtr.Zero;
   static IntPtr _sb = IntPtr.Zero;
   // dimensions: pw/ph = portrait, lw/lh = landscape
   static int _pw, _ph, _lw, _lh;
   static int _lpw, _lph, _lpx, _lpy; // last known mirror pos/size
   static int _sx, _sy; // last computed sidebar screen position
+  static int _sw, _sh; // last computed sidebar size
   static bool _landscape; // current orientation
   static IntPtr _hProc = IntPtr.Zero;
+
+  static bool MatchesTitle(IntPtr hwnd)
+  {
+    if (hwnd == IntPtr.Zero || !IsWindow(hwnd)) return false;
+    var title = new System.Text.StringBuilder(512);
+    GetWindowText(hwnd, title, title.Capacity);
+    return title.ToString() == _title;
+  }
+
+  static IntPtr FindMirrorWindow()
+  {
+    if (MatchesTitle(_preferredMh))
+      return _preferredMh;
+
+    return FindWindow(null, _title);
+  }
 
   // Calculate sidebar position & size based on mirror window & orientation
   static void PositionSidebar()
@@ -64,8 +83,16 @@ class T
       _sy = p.Y + (cr.B - sh) / 2;
     }
 
+    bool sizeChanged = sw != _sw || sh != _sh;
+
     SetWindowPos(_sb, IntPtr.Zero, _sx, _sy, sw, sh, 0x0004 | 0x0010);
-    Console.WriteLine("RESIZE " + sw + " " + sh);
+
+    if (sizeChanged)
+    {
+      _sw = sw;
+      _sh = sh;
+      Console.WriteLine("RESIZE " + sw + " " + sh);
+    }
 
     if (isLandscape != _landscape)
     {
@@ -93,7 +120,7 @@ class T
         {
           System.Threading.Thread.Sleep(200);
           // Look for a new window with the same title (e.g., SDL recreation)
-          IntPtr mh = FindWindow(null, _title);
+          IntPtr mh = FindMirrorWindow();
           if (mh != IntPtr.Zero)
           {
             if (!IsWindow(_sb)) { Application.Exit(); return; }
@@ -152,12 +179,14 @@ class T
     _ph = int.Parse(a[3]);
     _lw = int.Parse(a[4]);
     _lh = int.Parse(a[5]);
+    if (a.Length >= 7)
+      _preferredMh = new IntPtr(long.Parse(a[6]));
 
-    // Find mirror window by title, retry for up to 2s
+    // Prefer a known mirror HWND, then fall back to finding the window by title.
     IntPtr mh = IntPtr.Zero;
     for (int i = 0; i < 10 && mh == IntPtr.Zero; i++)
     {
-      mh = FindWindow(null, _title);
+      mh = FindMirrorWindow();
       if (mh == IntPtr.Zero) System.Threading.Thread.Sleep(200);
     }
     if (mh == IntPtr.Zero) return 1;

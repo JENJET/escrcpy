@@ -1,3 +1,4 @@
+export { default as appLauncherModule } from './app-launcher/index.js'
 export { default as controlModule } from './control/index.js'
 export { default as explorerModule } from './explorer/index.js'
 export { default as mainModule } from './main/index.js'

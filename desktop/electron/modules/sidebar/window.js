@@ -45,7 +45,7 @@ function getDimensions(btnCount) {
   }
 }
 
-function startTracker(win, title, pw, ph, lw, lh) {
+function startTracker(win, title, pw, ph, lw, lh, mirrorHwnd = 0) {
   if (!title || !win || win.isDestroyed() || !getExe())
     return () => { }
 
@@ -57,14 +57,6 @@ function startTracker(win, title, pw, ph, lw, lh) {
   let orientation = 0 // 0=portrait, 1=landscape
 
   const dims = { pw, ph, lw, lh }
-
-  function applyBounds(x, y) {
-    if (win.isDestroyed())
-      return
-    const w = orientation === 1 ? dims.lw : dims.pw
-    const h = orientation === 1 ? dims.lh : dims.ph
-    win.setBounds({ x, y, width: w, height: h })
-  }
 
   function sendOrientation(val) {
     if (win.isDestroyed())
@@ -86,7 +78,15 @@ function startTracker(win, title, pw, ph, lw, lh) {
       }
 
       const hwnd = Number(win.getNativeWindowHandle().readBigUInt64LE(0))
-      proc = spawn(exe, [String(hwnd), title, String(dims.pw), String(dims.ph), String(dims.lw), String(dims.lh)], {
+      proc = spawn(exe, [
+        String(hwnd),
+        title,
+        String(dims.pw),
+        String(dims.ph),
+        String(dims.lw),
+        String(dims.lh),
+        String(mirrorHwnd || 0),
+      ], {
         stdio: ['pipe', 'pipe', 'ignore'],
         detached: false,
       })
@@ -101,18 +101,12 @@ function startTracker(win, title, pw, ph, lw, lh) {
           if (line.startsWith('ORIENTATION')) {
             const val = Number(line.split(/\s+/)[1] || 0)
             sendOrientation(val)
-            // Sync window size to match new orientation
             const w = val === 1 ? dims.lw : dims.pw
             const h = val === 1 ? dims.lh : dims.ph
-            const b = win.getBounds()
-            win.setBounds({ x: b.x, y: b.y, width: w, height: h })
             trySend(win, 'sidebar-size', { width: w, height: h })
           }
           else if (line.startsWith('FOUND')) {
             retries = 0
-            const parts = line.split(/\s+/)
-            if (parts[1] && parts[2])
-              applyBounds(Number(parts[1]), Number(parts[2]))
             win.show()
             win.moveTop()
             const w = orientation === 1 ? dims.lw : dims.pw
@@ -125,8 +119,6 @@ function startTracker(win, title, pw, ph, lw, lh) {
               const sw = Number(parts[1])
               const sh = Number(parts[2])
               if (!win.isDestroyed()) {
-                const b = win.getBounds()
-                win.setBounds({ x: b.x, y: b.y, width: sw, height: sh })
                 trySend(win, 'sidebar-size', { width: sw, height: sh })
               }
             }
@@ -183,7 +175,7 @@ export default {
     const trackers = new Map()
 
     function onOpen(event, data) {
-      const { mirrorId, deviceId, mirrorTitle, btnCount } = data
+      const { mirrorId, deviceId, mirrorTitle, btnCount, mirrorHwnd } = data
       if (!mirrorId || !mirrorTitle)
         return
 
@@ -218,7 +210,7 @@ export default {
         hooks: {
           ready(win) {
             trySend(win, 'device-change', { id: deviceId })
-            const stopTracker = startTracker(win, mirrorTitle, dims.pw, dims.ph, dims.lw, dims.lh)
+            const stopTracker = startTracker(win, mirrorTitle, dims.pw, dims.ph, dims.lw, dims.lh, mirrorHwnd)
             trackers.set(mirrorId, stopTracker)
           },
           closed() {

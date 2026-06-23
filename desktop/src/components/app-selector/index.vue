@@ -1,5 +1,47 @@
 <template>
+  <div
+    v-if="embedded"
+    class="h-full w-full flex flex-col overflow-hidden bg-transparent"
+    @mouseenter="loadAppList"
+    @keydown.stop
+  >
+    <div class="flex-none px-3 py-2 border-b border-black/8 dark:border-white/8">
+      <el-input v-model="keyword" class="!w-full app-selector-search" :placeholder="$t('common.search')" prefix-icon="Search" />
+    </div>
+
+    <div v-if="loading" class="flex-1 min-h-0 flex flex-col items-center justify-center gap-2 text-primary-500">
+      <div class="i-ep-loading animate-spin size-6"></div>
+      <div>
+        {{ $t('common.loading') }}
+      </div>
+    </div>
+
+    <div v-else class="flex-1 min-h-0 overflow-y-auto py-1">
+      <button
+        v-for="item of options"
+        :key="item.value"
+        type="button"
+        class="app-selector-item"
+        :title="item.packageName"
+        @click="onSelect(item)"
+      >
+        <el-icon v-if="item.icon" class="flex-none mr-2">
+          <component :is="item.icon" />
+        </el-icon>
+
+        <span class="min-w-0 flex-1 truncate text-left" :class="[labelClass]">
+          {{ item.label }}
+        </span>
+
+        <span v-if="$slots.actions" class="flex-none ml-2 flex items-center">
+          <slot name="actions" :item="item" />
+        </span>
+      </button>
+    </div>
+  </div>
+
   <el-dropdown
+    v-else
     ref="dropdownRef" :trigger="trigger" :max-height="maxHeight" class="w-full" v-bind="$attrs"
     @visible-change="onVisibleChange" @mouseenter="loadAppList" @keydown.stop
   >
@@ -68,6 +110,10 @@ const props = defineProps({
     default: item => `${item.name || item.label}[${item.packageName}]`,
   },
   withSecondary: {
+    type: Boolean,
+    default: false,
+  },
+  embedded: {
     type: Boolean,
     default: false,
   },
@@ -285,7 +331,53 @@ watch(() => props.deviceId, () => {
   loaded.value = false
   appList.value = []
   loadPromise = null
+
+  if (props.embedded) {
+    loadAppList()
+  }
 })
 
-defineExpose({ loadAppList, appList, loading })
+onMounted(() => {
+  if (props.embedded) {
+    loadAppList()
+  }
+})
+
+defineExpose({
+  loadAppList,
+  appList,
+  loading,
+  open: () => dropdownRef.value?.handleOpen?.(),
+  close: () => dropdownRef.value?.handleClose?.(),
+})
 </script>
+
+<style lang="postcss" scoped>
+.app-selector-item {
+  @apply w-full min-h-9 px-3 flex items-center text-sm text-[var(--el-text-color-regular)];
+  @apply bg-transparent border-0 outline-none cursor-pointer;
+  @apply hover:bg-[#002d23] active:bg-[#00382c];
+}
+
+.app-selector-item:hover {
+  color: var(--el-color-primary);
+}
+
+:deep(.app-selector-search .el-input__wrapper) {
+  @apply h-10 min-h-10 rounded-md shadow-none;
+  @apply border border-[#3f4248] bg-[#1b1c1f];
+  padding-inline: 12px;
+}
+
+:deep(.app-selector-search .el-input__inner) {
+  @apply h-10 leading-10 text-[15px] text-[var(--el-text-color-regular)];
+}
+
+:deep(.app-selector-search .el-input__inner::placeholder) {
+  color: #9ca3af;
+}
+
+:deep(.app-selector-search .el-input__prefix) {
+  @apply text-[18px] text-[#9ca3af];
+}
+</style>

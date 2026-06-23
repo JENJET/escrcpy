@@ -20,6 +20,7 @@ const alias = {
   $electron: resolve('electron'),
   $control: resolve('pages/control'),
   $explorer: resolve('pages/explorer'),
+  $appLauncher: resolve('pages/app-launcher'),
   $sidebar: resolve('pages/sidebar'),
   $terminal: resolve('pages/terminal'),
 }
@@ -56,6 +57,7 @@ export default function (args) {
             main: resolve('index.html'),
             control: resolve('pages/control/index.html'),
             explorer: resolve('pages/explorer/index.html'),
+            appLauncher: resolve('pages/app-launcher/index.html'),
             sidebar: resolve('pages/sidebar/index.html'),
             terminal: resolve('pages/terminal/index.html'),
           },

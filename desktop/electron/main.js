@@ -38,6 +38,7 @@ import {
 } from './services/index.js'
 
 import {
+  appLauncherModule,
   controlModule,
   explorerModule,
   mainModule,
@@ -76,6 +77,7 @@ mainApp.use(launchService)
 mainApp.use(shortcutsService)
 
 mainApp.use(controlModule)
+mainApp.use(appLauncherModule)
 mainApp.use(explorerModule)
 mainApp.use(terminalModule)
 mainApp.use(scheduleModule)

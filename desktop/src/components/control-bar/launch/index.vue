@@ -108,24 +108,22 @@ function getOrientationToggleTitle(item = {}) {
   return `${window.t('device.control.rotation.name')}: ${title}`
 }
 
+function getLauncherAnchor() {
+  return {
+    placement: props.vertical ? 'top' : 'bottom',
+  }
+}
+
 function handleTrigger() {
   if (!props.floating) {
     return false
   }
 
-  const channel = 'startApp'
-
-  window.$preload.ipcRenderer.once(channel, (event, value, item) => {
-    onStartApp(item)
+  window.$preload.win.open('pages/app-launcher', {
+    device: toRaw(props.device),
+    anchor: getLauncherAnchor(),
+    show: false,
   })
-
-  const options = toRaw(appSelectorRef.value?.appList || []).map(item => ({
-    ...item,
-    label: item.label || `${item.name}[${item.packageName}]`,
-    value: item.value ?? item.packageName,
-  }))
-
-  window.$preload.ipcRenderer.invoke('open-system-menu', { channel, options })
 }
 
 function onStartApp(item = {}) {
