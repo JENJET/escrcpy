@@ -14,6 +14,12 @@ export class ProcessManager {
     this.processList.push(process)
   }
 
+  remove(process) {
+    const pid = process?.pid || process
+    this.processList = this.processList.filter(item => item.pid !== pid)
+    return this
+  }
+
   async kill(process) {
     if (!process) {
       for (const item of this.processList) {
@@ -26,7 +32,7 @@ export class ProcessManager {
 
     const pid = process?.pid || process
     await treeKill(pid, 'SIGTERM')
-    this.processList = this.processList.filter(item => item.pid !== pid)
+    this.remove(pid)
     return this
   }
 }

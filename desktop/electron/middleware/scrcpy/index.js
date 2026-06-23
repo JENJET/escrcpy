@@ -10,7 +10,47 @@ const processManager = new ProcessManager()
 
 electronAPI.ipcRenderer.on('quit-before', () => {
   processManager.kill()
+  electronAPI.ipcRenderer.send('scrcpy-audio-kill-all')
 })
+
+function hasNoAudio(args = '') {
+  return /(?:^|\s)--no-audio(?:\s|$)/.test(args)
+}
+
+function appendNoAudio(args = '') {
+  return hasNoAudio(args) ? args : `${args} --no-audio`
+}
+
+function hasPort(args = '') {
+  return /(?:^|\s)--port(?:=|\s|$)/.test(args)
+}
+
+function acquirePort() {
+  return electronAPI.ipcRenderer.sendSync('scrcpy-port-acquire')
+}
+
+function releasePort(port) {
+  return electronAPI.ipcRenderer.sendSync('scrcpy-port-release', port)
+}
+
+function appendDedicatedPort(command, port) {
+  if (!port || hasPort(command)) {
+    return command
+  }
+
+  return `${command} --port=${port}:${port}`
+}
+
+function retainAudioMirror(serial, args) {
+  return electronAPI.ipcRenderer.sendSync('scrcpy-audio-retain', {
+    serial,
+    muted: hasNoAudio(args),
+  })
+}
+
+function releaseAudioMirror(token) {
+  return electronAPI.ipcRenderer.sendSync('scrcpy-audio-release', token)
+}
 
 function normalizeScrcpyError(error) {
   const message = error?.stderr || error?.message
@@ -19,8 +59,10 @@ function normalizeScrcpyError(error) {
 
 function createScrcpyProcess(command, options = {}) {
   let scrcpyProcess = null
+  const port = hasPort(command) ? null : acquirePort()
+  const commandToRun = appendDedicatedPort(command, port)
 
-  scrcpyProcess = sheller(`scrcpy ${command}`, {
+  scrcpyProcess = sheller(`scrcpy ${commandToRun}`, {
     shell: true,
     encoding: 'utf8',
     ...options,
@@ -31,6 +73,10 @@ function createScrcpyProcess(command, options = {}) {
   })
 
   processManager.add(scrcpyProcess)
+  scrcpyProcess.finally(() => {
+    releasePort(port)
+    processManager.remove(scrcpyProcess)
+  }).catch(() => {})
 
   const promise = scrcpyProcess.catch(normalizeScrcpyError)
 
@@ -43,14 +89,21 @@ function createScrcpyProcess(command, options = {}) {
 
 function createMirrorProcess(
   serial,
-  { title, args = '', mirrorId, ...options } = {},
+  { title, args = '', mirrorId, shareAudio = true, ...options } = {},
 ) {
+  const audioToken = shareAudio
+    ? retainAudioMirror(serial, args)
+    : null
+
+  const mirrorArgs = appendNoAudio(args)
+
   const proc = createScrcpyProcess(
-    `--serial="${serial}" --window-title="${title}" ${args}`,
+    `--serial="${serial}" --window-title="${title}" ${mirrorArgs}`,
     options,
   )
 
   proc.finally(() => {
+    releaseAudioMirror(audioToken)
     electronAPI.ipcRenderer.send('mirror-process-exit', serial)
     if (mirrorId)
       electronAPI.ipcRenderer.send('sidebar-close', mirrorId)

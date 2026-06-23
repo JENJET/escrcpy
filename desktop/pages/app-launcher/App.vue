@@ -7,7 +7,7 @@
           embedded
           with-home
           with-secondary
-          label-class="pr-32"
+          label-class="pr-2"
           @change="(pkg, item) => onStartApp(item)"
         >
           <template #actions="{ item }">
@@ -151,8 +151,19 @@ window.$preload.ipcRenderer.on('app-launcher-open', (event, payload = {}) => {
   launchOrientation.init()
 })
 
+function onKeydown(event) {
+  if (event.key === 'Escape') {
+    closeWindow()
+  }
+}
+
 onMounted(() => {
   launchOrientation.init()
+  window.addEventListener('keydown', onKeydown, true)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown, true)
 })
 </script>
 

@@ -32,6 +32,7 @@ import {
   launchService,
   lifecycleService,
   listenersService,
+  scrcpyAudioService,
   shortcutsService,
   trayService,
   updaterService,
@@ -70,6 +71,7 @@ mainApp.use(clipboardPlugin)
 mainApp.use(edgerService)
 mainApp.use(listenersService)
 mainApp.use(handlesService)
+mainApp.use(scrcpyAudioService)
 mainApp.use(trayService)
 mainApp.use(contextMenuService)
 mainApp.use(updaterService)
