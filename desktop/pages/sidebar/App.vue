@@ -45,10 +45,6 @@ body {
   height: 100%;
 }
 
-.el-button.el-button-nav-vert {
-  display: none !important;
-}
-
 .sidebar-wrap .bg-primary-100 {
   border-radius: 8px;
 }

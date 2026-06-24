@@ -114,8 +114,8 @@ class T
       {
         Console.WriteLine("CLOSE");
         _lpw = _lph = _lpx = _lpy = 0;
-        // If we have the process handle, wait forever; otherwise 30s max
-        int timeout = _hProc != IntPtr.Zero ? -1 : 150;
+        // If we have the process handle, wait forever; otherwise 5s max
+        int timeout = _hProc != IntPtr.Zero ? -1 : 25;
         for (int i = 0; timeout < 0 || i < timeout; i++)
         {
           System.Threading.Thread.Sleep(200);

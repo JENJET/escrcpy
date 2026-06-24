@@ -14,6 +14,7 @@
 <script>
 import { sleep } from '$/utils'
 import { openFloatControl } from '$/utils/device/index.js'
+import { controlDefinitions, isControlHidden } from '$/components/control-bar/index.vue'
 
 export default {
   props: {
@@ -29,9 +30,11 @@ export default {
   setup() {
     const preferenceStore = usePreferenceStore()
     const deviceStore = useDeviceStore()
+    const controlStore = useControlStore()
     return {
       preferenceStore,
       deviceStore,
+      controlStore,
     }
   },
   data() {
@@ -59,7 +62,14 @@ export default {
           stderr: this.onStderr,
         })
 
-        window.$preload.ipcRenderer.send('sidebar-open', { mirrorId, deviceId: row.id, mirrorTitle })
+        // sidebar 下 (floating=true) 根据 hiddenKeys 排除隐藏按钮
+        const sidebarProps = { floating: true }
+        const sidebarBtnCount = [...new Set(this.controlStore.barLayout)]
+          .filter(k => {
+            const def = controlDefinitions[k]
+            return !def || !isControlHidden(def, sidebarProps)
+          }).length || undefined
+        window.$preload.ipcRenderer.send('sidebar-open', { mirrorId, deviceId: row.id, mirrorTitle, btnCount: sidebarBtnCount })
 
         await sleep(500)
 
@@ -72,6 +82,7 @@ export default {
         window.$preload.ipcRenderer.send('sidebar-close', mirrorId)
       }
       catch (error) {
+        window.$preload.ipcRenderer.send('sidebar-close', mirrorId)
         console.error('mirror.args', args)
         console.error('mirror.error', error)
 

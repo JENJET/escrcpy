@@ -128,6 +128,97 @@ import Terminal from './terminal/index.vue'
 import Schedule from './schedule/index.vue'
 import Volume from './volume/index.vue'
 
+export const controlDefinitions = {
+  switch: {
+    label: 'device.control.switch',
+    fontIcon: 'i-proicons-menu',
+    command: 'input keyevent 187',
+  },
+  home: {
+    label: 'device.control.home',
+    fontIcon: 'i-bi-app',
+    command: 'input keyevent 3',
+  },
+  back: {
+    label: 'device.control.return',
+    fontIcon: 'i-cil-caret-left',
+    command: 'input keyevent 4',
+  },
+  launch: {
+    label: 'device.control.launch',
+    fontIcon: 'i-famicons-rocket-outline',
+    component: 'Launch',
+  },
+  turnScreenOff: {
+    label: 'device.control.turnScreenOff',
+    fontIcon: 'i-bi-file-break',
+    tips: 'device.control.turnScreenOff.tips',
+  },
+  notification: {
+    label: 'device.control.notification',
+    fontIcon: 'i-bi-bell',
+    command: 'cmd statusbar expand-notifications',
+    tips: 'device.control.notification.tips',
+  },
+  power: {
+    label: 'device.control.power',
+    fontIcon: 'i-uiw-poweroff',
+    command: 'input keyevent 26',
+    tips: 'device.control.power.tips',
+  },
+  rotation: {
+    label: 'device.control.rotation.name',
+    fontIcon: 'i-solar-smartphone-rotate-2-outline',
+    component: 'Rotation',
+  },
+  volume: {
+    label: 'device.control.volume.name',
+    fontIcon: 'i-simple-line-icons-volume-2',
+    component: 'Volume',
+  },
+  screenshot: {
+    label: 'device.control.capture',
+    fontIcon: 'i-simple-line-icons-camera',
+    component: 'Screenshot',
+  },
+  reboot: {
+    label: 'device.control.reboot',
+    fontIcon: 'i-iconoir-refresh',
+    command: 'reboot',
+  },
+  install: {
+    label: 'device.control.install',
+    fontIcon: 'i-bi-file-arrow-up',
+    component: 'Install',
+  },
+  explorer: {
+    label: 'device.control.file.name',
+    fontIcon: 'i-bi-folder',
+    component: 'Explorer',
+  },
+  terminal: {
+    label: 'device.terminal.name',
+    fontIcon: 'i-bi-terminal',
+    component: 'Terminal',
+  },
+  schedule: {
+    label: 'device.schedule.name',
+    fontIcon: 'i-bi-clock',
+    component: 'Schedule',
+    hiddenKeys: ['floating'],
+  },
+  gnirehtet: {
+    label: 'device.control.gnirehtet',
+    fontIcon: 'i-bi-hdd-network',
+    component: 'Gnirehtet',
+    tips: 'device.control.gnirehtet.tips',
+  },
+}
+
+export function isControlHidden(definition, props) {
+  return (definition.hiddenKeys || []).some(key => props[key])
+}
+
 export default {
   components: {
     ControlBarButton,
@@ -198,105 +289,18 @@ export default {
   },
   computed: {
     controlModel() {
-      const valueMap = {
-        switch: {
-          label: 'device.control.switch',
-          fontIcon: 'i-proicons-menu',
-          command: 'input keyevent 187',
-        },
-        home: {
-          label: 'device.control.home',
-          fontIcon: 'i-bi-app',
-          command: 'input keyevent 3',
-        },
-        back: {
-          label: 'device.control.return',
-          fontIcon: 'i-cil-caret-left',
-          command: 'input keyevent 4',
-        },
-        launch: {
-          label: 'device.control.launch',
-          fontIcon: 'i-famicons-rocket-outline',
-          component: 'Launch',
-        },
-        turnScreenOff: {
-          label: 'device.control.turnScreenOff',
-          fontIcon: 'i-bi-file-break',
-          tips: 'device.control.turnScreenOff.tips',
-          trigger: () => {
-            window.$preload.scrcpy.helper(this.device.id, '--turn-screen-off')
-          },
-        },
-        notification: {
-          label: 'device.control.notification',
-          fontIcon: 'i-bi-bell',
-          command: 'cmd statusbar expand-notifications',
-          tips: 'device.control.notification.tips',
-        },
-        power: {
-          label: 'device.control.power',
-          fontIcon: 'i-uiw-poweroff',
-          command: 'input keyevent 26',
-          tips: 'device.control.power.tips',
-        },
-        rotation: {
-          label: 'device.control.rotation.name',
-          fontIcon: 'i-solar-smartphone-rotate-2-outline',
-          component: 'Rotation',
-        },
-        volume: {
-          label: 'device.control.volume.name',
-          fontIcon: 'i-simple-line-icons-volume-2',
-          component: 'Volume',
-        },
-        screenshot: {
-          label: 'device.control.capture',
-          fontIcon: 'i-simple-line-icons-camera',
-          component: 'Screenshot',
-        },
-        reboot: {
-          label: 'device.control.reboot',
-          fontIcon: 'i-iconoir-refresh',
-          command: 'reboot',
-        },
-        install: {
-          label: 'device.control.install',
-          fontIcon: 'i-bi-file-arrow-up',
-          component: 'Install',
-        },
-        explorer: {
-          label: 'device.control.file.name',
-          fontIcon: 'i-bi-folder',
-          component: 'Explorer',
-        },
-        terminal: {
-          label: 'device.terminal.name',
-          fontIcon: 'i-bi-terminal',
-          component: 'Terminal',
-        },
-        schedule: {
-          label: 'device.schedule.name',
-          fontIcon: 'i-bi-clock',
-          component: 'Schedule',
-          hiddenKeys: ['floating'],
-        },
-        gnirehtet: {
-          label: 'device.control.gnirehtet',
-          fontIcon: 'i-bi-hdd-network',
-          component: 'Gnirehtet',
-          tips: 'device.control.gnirehtet.tips',
-        },
+      const valueMap = { ...controlDefinitions }
+      valueMap.turnScreenOff = {
+        ...valueMap.turnScreenOff,
+        trigger: () => window.$preload.scrcpy.helper(this.device.id, '--turn-screen-off'),
       }
-
-      const isHidden = item =>
-        (item.hiddenKeys || []).some(key => this.$props[key])
 
       const barLayout = [...new Set([...this.controlStore.barLayout, ...Object.keys(valueMap)])]
 
       const value = barLayout.reduce((arr, key) => {
         const item = valueMap[key]
 
-        if (item && !isHidden(item)) {
+        if (item && !isControlHidden(item, this.$props)) {
           arr.push({
             ...item,
             id: key,
